@@ -1123,9 +1123,7 @@ class _Project:
 
                 def create_page(filename: str) -> Tuple[Page, EmbeddedRstParser]:
                     text, _ = self.config.read(path)
-                    page = Page.create(
-                        path, filename, text, n.Root((-1,), [], {})
-                    )
+                    page = Page.create(path, filename, text, n.Root((-1,), [], {}))
                     return (
                         page,
                         EmbeddedRstParser(
@@ -1139,7 +1137,6 @@ class _Project:
 
                 for page in openapi_pages:
                     self._page_updated(page, [])
-
 
         # Initialize our YAML file registry
         for prefix, giza_category in self.yaml_mapping.items():

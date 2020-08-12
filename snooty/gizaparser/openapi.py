@@ -5,12 +5,15 @@ import json
 import os
 import yaml
 from pathlib import Path
+
 # from docutils.parsers.rst import Directive, directives
 from docutils import statemachine, utils, nodes
 from typing import Callable, List, Sequence, Tuple
+
 # from docutils.utils.error_reporting import ErrorString
 
-from ..types import EmbeddedRstParser, Page, ProjectConfig
+from ..page import Page
+from ..types import EmbeddedRstParser, ProjectConfig
 from .. import n
 
 # As of 2018-04, the OpenAPI Python libraries are immature and lack the
@@ -22,28 +25,30 @@ from .. import n
 class DictLike:
     """Our templating engine accesses properties via indexing. This class
        mixin creates a __getitem__ wrapper around getattr."""
+
     def __getitem__(self, key):
         return getattr(self, key)
 
 
 def deduce_type(obj):
     """Return the type of a schema definition."""
-    data_type = obj.get('type', None)
+    data_type = obj.get("type", None)
 
     if data_type is not None:
         return data_type
 
-    if 'items' in obj:
-        return 'array'
+    if "items" in obj:
+        return "array"
 
-    if 'properties' in obj:
-        return 'object'
+    if "properties" in obj:
+        return "object"
 
-    return 'any'
+    return "any"
 
 
 class TagDefinition(DictLike):
     """Resources are grouped by logical "tags"."""
+
     def __init__(self, name, title, operations):
         self.name = name
         self.title = title
@@ -52,6 +57,7 @@ class TagDefinition(DictLike):
 
 class FieldDescription(DictLike):
     """A field in a request body, response, or parameter."""
+
     def __init__(self, name, description, required, data_type, enum):
         # type: (str, str, bool, str) -> None
         self.name = name
@@ -63,24 +69,35 @@ class FieldDescription(DictLike):
     @classmethod
     def load(cls, data, name=None, required=None):
         # Merge the schema property, if there is one
-        if 'schema' in data:
-            for key, value in data['schema'].items():
+        if "schema" in data:
+            for key, value in data["schema"].items():
                 data[key] = value
 
         return cls(
-            name if name is not None else data['name'],
-            data.get('description', ''),
-            required if required is not None else data.get('required', False),
+            name if name is not None else data["name"],
+            data.get("description", ""),
+            required if required is not None else data.get("required", False),
             deduce_type(data),
-            data.get('enum', []))
+            data.get("enum", []),
+        )
 
 
-HTTP_VERBS = ('post', 'get', 'put', 'patch', 'delete', 'options',
-              'connect', 'trace', 'head')
+HTTP_VERBS = (
+    "post",
+    "get",
+    "put",
+    "patch",
+    "delete",
+    "options",
+    "connect",
+    "trace",
+    "head",
+)
 
-fett.Template.FILTERS['values'] = lambda val: val.values()
+fett.Template.FILTERS["values"] = lambda val: val.values()
 
-PARAMETER_TEMPLATE = fett.Template('''
+PARAMETER_TEMPLATE = fett.Template(
+    """
 {{ title }}
 *****************
 
@@ -107,9 +124,11 @@ PARAMETER_TEMPLATE = fett.Template('''
        {{ end }}
 
 {{ end }}
-''')
+"""
+)
 
-OPENAPI_TEMPLATE = fett.Template('''
+OPENAPI_TEMPLATE = fett.Template(
+    """
 {{ if servers }}
 Base URL
 ~~~~~~~~
@@ -223,11 +242,13 @@ Base URL
 {{ end }}
 
 {{ end }}
-''')
+"""
+)
 
 
 def ordered_load_yaml(stream):
     """Load a YAML stream, maintaining order of maps."""
+
     class OrderedLoader(yaml.SafeLoader):
         pass
 
@@ -236,8 +257,8 @@ def ordered_load_yaml(stream):
         return OrderedDict(loader.construct_pairs(node))
 
     OrderedLoader.add_constructor(
-        yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
-        construct_mapping)
+        yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, construct_mapping
+    )
 
     return yaml.load(stream, OrderedLoader)
 
@@ -245,29 +266,29 @@ def ordered_load_yaml(stream):
 # JavaScript Object Notation (JSON) Pointer
 # See https://tools.ietf.org/html/rfc6901
 def encode_json_pointer(ptr):
-    return ptr.replace('~', '~0').replace('/', '~1')
+    return ptr.replace("~", "~0").replace("/", "~1")
 
 
 def decode_json_pointer(ptr):
-    return ptr.replace('~1', '/').replace('~0', '~')
+    return ptr.replace("~1", "/").replace("~0", "~")
 
 
 def dereference_json_pointer(root, ptr):
     """Given a dictionary or list, return the element referred to by the
        given JSON pointer (RFC-6901)."""
     cursor = root
-    components = ptr.lstrip('#').lstrip('/').split('/')
+    components = ptr.lstrip("#").lstrip("/").split("/")
     for component in components:
         component = decode_json_pointer(component)
         if isinstance(cursor, list):
-            if component == '-':
+            if component == "-":
                 # "-" specifies the imaginary element *after* the last element of an array.
                 # We don't need to support this, so... we don't.
                 raise NotImplementedError('"-" list components not supported')
 
             component = int(component)
         elif not isinstance(cursor, dict):
-            raise ValueError('Invalid entry type')
+            raise ValueError("Invalid entry type")
 
         cursor = cursor[component]
 
@@ -276,53 +297,61 @@ def dereference_json_pointer(root, ptr):
 
 def schema_as_json(content_schema):
     """Create a JSON document describing the shape of an OpenAPI schema."""
-    if 'properties' in content_schema:
+    if "properties" in content_schema:
         current = OrderedDict()
-        for prop, options in content_schema['properties'].items():
-            if 'type' not in options:
-                current[prop] = 'Any'
-            elif options['type'] == 'object':
+        for prop, options in content_schema["properties"].items():
+            if "type" not in options:
+                current[prop] = "Any"
+            elif options["type"] == "object":
                 current[prop] = schema_as_json(options)
-            elif options['type'] == 'array':
-                current[prop] = [schema_as_json(options['items'])]
+            elif options["type"] == "array":
+                current[prop] = [schema_as_json(options["items"])]
             else:
-                current[prop] = options['type']
+                current[prop] = options["type"]
 
         return current
 
-    if 'items' in content_schema:
-        return [schema_as_json(content_schema['items'])]
+    if "items" in content_schema:
+        return [schema_as_json(content_schema["items"])]
 
-    return content_schema['type']
+    return content_schema["type"]
 
 
-def schema_as_fieldlist(content_schema, path=''):
+def schema_as_fieldlist(content_schema, path=""):
     """Return a list of OpenAPI schema property descriptions."""
     fields = []
 
-    if 'properties' in content_schema:
-        required_fields = content_schema.get('required', ())
+    if "properties" in content_schema:
+        required_fields = content_schema.get("required", ())
 
-        for prop, options in content_schema['properties'].items():
-            new_path = path + '.' + prop if path else prop
-            required = options['required'] if 'required' in options else prop in required_fields
+        for prop, options in content_schema["properties"].items():
+            new_path = path + "." + prop if path else prop
+            required = (
+                options["required"]
+                if "required" in options
+                else prop in required_fields
+            )
 
-            if 'type' not in options:
+            if "type" not in options:
                 fields.append(FieldDescription.load(options, new_path, required))
-            elif options['type'] == 'object':
+            elif options["type"] == "object":
                 fields.append(FieldDescription.load(options, new_path, required))
                 fields.extend(schema_as_fieldlist(options, path=new_path))
-            elif options['type'] == 'array':
+            elif options["type"] == "array":
                 fields.append(FieldDescription.load(options, new_path, required))
-                fields.extend(schema_as_fieldlist(options['items'], path=new_path + '.[]'))
+                fields.extend(
+                    schema_as_fieldlist(options["items"], path=new_path + ".[]")
+                )
             else:
                 fields.append(FieldDescription.load(options, new_path, required))
 
-    if 'items' in content_schema:
-        new_path = path + '.' + '[]' if path else '[]'
-        content_schema['type'] = 'array of {}s'.format(deduce_type(content_schema['items']))
+    if "items" in content_schema:
+        new_path = path + "." + "[]" if path else "[]"
+        content_schema["type"] = "array of {}s".format(
+            deduce_type(content_schema["items"])
+        )
         fields.append(FieldDescription.load(content_schema, new_path))
-        fields.extend(schema_as_fieldlist(content_schema['items'], path=new_path))
+        fields.extend(schema_as_fieldlist(content_schema["items"], path=new_path))
 
     return fields
 
@@ -334,47 +363,47 @@ def process_parameters(endpoint, operation):
        * query_parameters
        * header_parameters
        * cookie_parameters"""
-    all_parameters = endpoint.get('parameters', []) + operation.get('parameters', [])
+    all_parameters = endpoint.get("parameters", []) + operation.get("parameters", [])
     path_parameters = []
     query_parameters = []
     header_parameters = []
     cookie_parameters = []
 
     parameter_types = {
-        'path': ('path_parameters', 'Path Parameters', path_parameters),
-        'query': ('query_parameters', 'Query Parameters', query_parameters),
-        'header': ('header_parameters', 'Header Parameters', header_parameters),
-        'cookie': ('cookie_parameters', 'Cookie Parameters', cookie_parameters),
+        "path": ("path_parameters", "Path Parameters", path_parameters),
+        "query": ("query_parameters", "Query Parameters", query_parameters),
+        "header": ("header_parameters", "Header Parameters", header_parameters),
+        "cookie": ("cookie_parameters", "Cookie Parameters", cookie_parameters),
     }
 
     for parameter in all_parameters:
-        parameter_types[parameter['in']][2].append(FieldDescription.load(parameter))
+        parameter_types[parameter["in"]][2].append(FieldDescription.load(parameter))
 
     result = {}
     for name, title, parameters in parameter_types.values():
-        result[name] = PARAMETER_TEMPLATE.render({
-            'title': title,
-            'parameters': parameters
-        }) if parameters else ''
+        result[name] = (
+            PARAMETER_TEMPLATE.render({"title": title, "parameters": parameters})
+            if parameters
+            else ""
+        )
 
     return result
 
 
 class OpenAPI:
-    __slots__ = ('data', 'tags')
+    __slots__ = ("data", "tags")
 
     def __init__(self, data):
         self.data = data
         self.tags = OrderedDict()  # type: OrderedDict[str, TagDefinition]
 
-        for tag_definition in self.data['tags']:
-            self.tags[tag_definition['name']] = TagDefinition(
-                tag_definition['name'],
-                tag_definition.get('description', ''),
-                [])
+        for tag_definition in self.data["tags"]:
+            self.tags[tag_definition["name"]] = TagDefinition(
+                tag_definition["name"], tag_definition.get("description", ""), []
+            )
 
         # Substitute refs
-        stack = [({}, '<root>', self.data)]
+        stack = [({}, "<root>", self.data)]
         while stack:
             parent, key, cursor = stack.pop()
             if isinstance(cursor, dict):
@@ -388,49 +417,58 @@ class OpenAPI:
         # Set up our operations
         for method, path, methods in self.resources():
             resource = methods[method]
-            resource.update({
-                'method': method,
-                'path': path,
-                'hash': '{}-{}'.format(method, path).lower()
-            })
+            resource.update(
+                {
+                    "method": method,
+                    "path": path,
+                    "hash": "{}-{}".format(method, path).lower(),
+                }
+            )
 
-            resource.setdefault('summary', '')
-            resource.setdefault('requestBody', None)
+            resource.setdefault("summary", "")
+            resource.setdefault("requestBody", None)
 
             security_schemas = self.get_security_schemas(resource)
             if security_schemas:
-                resource.setdefault('parameters', []).append({
-                    'name': 'Authorization',
-                    'description': security_schemas[0].get('description', ''),
-                    'in': 'header',
-                    'required': True,
-                    'schema': {'type': 'string'}
-                })
+                resource.setdefault("parameters", []).append(
+                    {
+                        "name": "Authorization",
+                        "description": security_schemas[0].get("description", ""),
+                        "in": "header",
+                        "required": True,
+                        "schema": {"type": "string"},
+                    }
+                )
 
-            for code, response in resource['responses'].items():
-                response.update({
-                    'code': code,
-                    'jsonSchema': None,
-                    'jsonFields': []
-                })
+            for code, response in resource["responses"].items():
+                response.update({"code": code, "jsonSchema": None, "jsonFields": []})
 
-                if 'content' in response and 'application/json' in response['content']:
-                    json_schema = response['content']['application/json']['schema']
-                    response['jsonSchema'] = json.dumps(schema_as_json(json_schema), indent=2)
-                    response['jsonFields'] = schema_as_fieldlist(json_schema)
+                if "content" in response and "application/json" in response["content"]:
+                    json_schema = response["content"]["application/json"]["schema"]
+                    response["jsonSchema"] = json.dumps(
+                        schema_as_json(json_schema), indent=2
+                    )
+                    response["jsonFields"] = schema_as_fieldlist(json_schema)
 
-            if resource['requestBody'] is not None and 'application/json' in resource['requestBody']['content']:
-                resource['requestBody'].setdefault('required', False)
-                resource['requestBody'].setdefault('description', '')
-                json_schema = resource['requestBody']['content']['application/json']['schema']
-                resource['requestBody']['jsonSchema'] = json.dumps(schema_as_json(json_schema), indent=2)
-                resource['requestBody']['jsonFields'] = schema_as_fieldlist(json_schema)
+            if (
+                resource["requestBody"] is not None
+                and "application/json" in resource["requestBody"]["content"]
+            ):
+                resource["requestBody"].setdefault("required", False)
+                resource["requestBody"].setdefault("description", "")
+                json_schema = resource["requestBody"]["content"]["application/json"][
+                    "schema"
+                ]
+                resource["requestBody"]["jsonSchema"] = json.dumps(
+                    schema_as_json(json_schema), indent=2
+                )
+                resource["requestBody"]["jsonFields"] = schema_as_fieldlist(json_schema)
 
             resource.update(process_parameters(methods, resource))
 
-            for tag in resource.get('tags', ()):
+            for tag in resource.get("tags", ()):
                 if tag not in self.tags:
-                    self.tags[tag] = TagDefinition(tag, '', [])
+                    self.tags[tag] = TagDefinition(tag, "", [])
 
                 self.tags[tag].operations.append(resource)
 
@@ -439,14 +477,14 @@ class OpenAPI:
         if not isinstance(val, dict):
             return val
 
-        if len(val) == 1 and '$ref' in val:
+        if len(val) == 1 and "$ref" in val:
             if loop_set is None:
                 loop_set = set()
 
             if id(val) in loop_set:
-                raise ValueError('$ref loop detected')
+                raise ValueError("$ref loop detected")
 
-            val = dereference_json_pointer(self.data, val['$ref'])
+            val = dereference_json_pointer(self.data, val["$ref"])
             loop_set.add(id(val))
             return self.dereference(val, loop_set)
 
@@ -454,7 +492,7 @@ class OpenAPI:
 
     def resources(self):
         """Enumerate resources listed within this OpenAPI tree."""
-        for path, methods in self.data['paths'].items():
+        for path, methods in self.data["paths"].items():
             for method in methods:
                 if method.lower() not in HTTP_VERBS:
                     continue
@@ -464,16 +502,16 @@ class OpenAPI:
     def get_security_schemas(self, operation):
         """Return the security schema definitions associated with an
            operation definition."""
-        security_schemas = operation.get('security', None)
+        security_schemas = operation.get("security", None)
 
         if security_schemas is None:
-            security_schemas = self.data.get('security', [])
+            security_schemas = self.data.get("security", [])
 
         # Look up the schema definition for each name
         result = []
         for security_schema in security_schemas:
             for security_name in security_schema:
-                result.append(self.data['components']['securitySchemes'][security_name])
+                result.append(self.data["components"]["securitySchemes"][security_name])
 
         return result
 
@@ -481,7 +519,6 @@ class OpenAPI:
     def load(cls, data) -> "OpenAPI":
         """Load an OpenAPI file stream."""
         return cls(ordered_load_yaml(data))
-
 
     def to_pages(
         self,
@@ -491,10 +528,9 @@ class OpenAPI:
         pages: List[Page] = []
 
         try:
-            rendered = OPENAPI_TEMPLATE.render({
-                'tags': self.tags.values(),
-                'servers': self.data['servers']
-            })
+            rendered = OPENAPI_TEMPLATE.render(
+                {"tags": self.tags.values(), "servers": self.data["servers"]}
+            )
         except Exception as error:
             print("ERRRRRRORRRRR")
             # raise self.severe('Failed to render template: {}'.format(ErrorString(error)))
@@ -507,17 +543,18 @@ class OpenAPI:
 
         return pages
 
-    def render(self, page: Page, rst_parser: EmbeddedRstParser, rst: str) -> List[n.Node]:
+    def render(
+        self, page: Page, rst_parser: EmbeddedRstParser, rst: str
+    ) -> List[n.Node]:
         children: List[n.Node] = []
         # if self.data:
-            # children.extend(rst_parser.parse_block(self.data, self.line))
+        # children.extend(rst_parser.parse_block(self.data, self.line))
         children.extend(rst_parser.parse_block(rst, 0))
 
         return children
 
-
     def openapi_to_page(
-            self, page: Page, rst_parser: EmbeddedRstParser, rst: str
+        self, page: Page, rst_parser: EmbeddedRstParser, rst: str
     ) -> n.Directive:
         rendered = self.render(page, rst_parser, rst)
         # directive = n.Directive((node.line,), [], "", "release_specification", [], {})
