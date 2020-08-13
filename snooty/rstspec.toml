@@ -606,11 +606,11 @@ inherit = "_guides-base"
 #    - second related page}
 # """
 
-[directive._openapi-base]
-required_context = "openapi"
+[directive.openapi]
+help = """Include a reStructuredText file's contents."""
+argument_type = ["path", "uri"]
 
 [directive.operation]
-inherit = "_openapi-base"
 content_type = "block"
 options.hash = "string"
 options.method = "string"

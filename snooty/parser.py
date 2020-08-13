@@ -497,6 +497,43 @@ class JSONVisitor:
                 for bullets in list_item.children:
                     self.validate_list_table(bullets, expected_num_columns)
 
+        elif name == "openapi":
+            if argument_text is None:
+                self.diagnostics.append(ExpectedPathArg(name, line))
+                return doc
+
+            _, filepath = util.reroot_path(
+                Path(argument_text), self.docpath, self.project_config.source_path
+            )
+
+            try:
+                with open(filepath) as f:
+                    openapi = OpenAPI.load(f)
+
+                def create_page(filename: str) -> Tuple[Page, EmbeddedRstParser]:
+                    text, _ = self.project_config.read(filepath)
+                    page = Page.create(filepath, filename, text, n.Root((-1,), [], {}))
+                    diagnostics: Dict[PurePath, List[Diagnostic]] = {}
+                    return (
+                        page,
+                        EmbeddedRstParser(
+                            self.project_config,
+                            page,
+                            diagnostics.setdefault(filepath, []),
+                        ),
+                    )
+
+                openapi_ast: n.Parent[n.Node] = openapi.to_ast(filepath, create_page)
+                doc.children.append(openapi_ast)
+
+            except OSError as err:
+                self.diagnostics.append(
+                    CannotOpenFile(argument_text, err.strerror, line)
+                )
+                return doc
+
+            # TODO: What to do here
+
         elif name == "literalinclude":
             if argument_text is None:
                 self.diagnostics.append(ExpectedPathArg(name, line))
@@ -637,7 +674,6 @@ class JSONVisitor:
                     or fileid.match("option/*.rst")
                     or fileid.match("toc/*.rst")
                     or fileid.match("apiargs/*.rst")
-                    or fileid.match("openapi*.rst")
                     or fileid == FileId("includes/hash.rst")
                 ):
                     pass
@@ -1117,26 +1153,6 @@ class _Project:
             prefix = get_giza_category(path)
             if prefix in self.yaml_mapping:
                 categorized[prefix].append(path)
-            elif "openapi" in path.as_posix():
-                with open(path, "r") as f:
-                    openapi = OpenAPI.load(f)
-
-                def create_page(filename: str) -> Tuple[Page, EmbeddedRstParser]:
-                    text, _ = self.config.read(path)
-                    page = Page.create(path, filename, text, n.Root((-1,), [], {}))
-                    return (
-                        page,
-                        EmbeddedRstParser(
-                            self.config,
-                            page,
-                            all_yaml_diagnostics.setdefault(path, []),
-                        ),
-                    )
-
-                openapi_pages: List[Page] = openapi.to_pages(path, create_page)
-
-                for page in openapi_pages:
-                    self._page_updated(page, [])
 
         # Initialize our YAML file registry
         for prefix, giza_category in self.yaml_mapping.items():

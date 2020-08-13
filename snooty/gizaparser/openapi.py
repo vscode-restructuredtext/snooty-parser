@@ -520,13 +520,11 @@ class OpenAPI:
         """Load an OpenAPI file stream."""
         return cls(ordered_load_yaml(data))
 
-    def to_pages(
+    def to_ast(
         self,
         source_path: Path,
         page_factory: Callable[[str], Tuple[Page, EmbeddedRstParser]],
-    ) -> List[Page]:
-        pages: List[Page] = []
-
+    ) -> n.Parent[n.Node]:
         try:
             rendered = OPENAPI_TEMPLATE.render(
                 {"tags": self.tags.values(), "servers": self.data["servers"]}
@@ -538,10 +536,7 @@ class OpenAPI:
         filename = os.path.splitext(source_path)[0]
         page, rst_parser = page_factory(f"{filename}.rst")
         page.category = "openapi"
-        page.ast = self.openapi_to_page(page, rst_parser, rendered)
-        pages.append(page)
-
-        return pages
+        return self.openapi_to_page(page, rst_parser, rendered)
 
     def render(
         self, page: Page, rst_parser: EmbeddedRstParser, rst: str
