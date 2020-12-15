@@ -6,7 +6,10 @@ build-backend = "flit.buildapi"
 module = "snooty"
 author = "MongoDB, inc."
 author-email = "i80and@foxquill.com"
-home-page = "https://github.com/mongodb/snooty-parser"
+home-page = "https://github.com/vscode-restructuredtext/snooty-parser"
+dist-name = "snooty-lextudio"
+maintainer = "LeXtudio Inc."
+maintainer-email = "support@lextudio.com"
 classifiers = ["License :: OSI Approved :: Apache Software License"]
 requires-python = "~= 3.7"
 requires = [
