@@ -362,7 +362,36 @@ class LanguageServer(pyls_jsonrpc.dispatchers.MethodDispatcher):
             watching_thread.daemon = True
             watching_thread.start()
 
-        return {"capabilities": {"textDocumentSync": 1}}
+        return {
+            "capabilities":
+            {
+                "textDocumentSync": 1,
+                "completionProvider": {
+                    "resolveProvider": False, # We know everything ahead of time
+                    "TriggerCharacters": ['/']
+                }
+            }
+        }
+
+    def completions(self, doc_uri, position):
+        """
+        Given the filename, return the completion items of the page.
+        """
+
+        if self.project is None:
+            logger.warn("Project uninitialized")
+            return None
+
+        filePath = self.uriToPath(doc_uri)
+        line_content = self.project.get_line_content(filePath, position["line"])
+        column: int = position["character"]
+        if column > 1 and line_content[column - 2:column] == '`/':
+            completions = self.project.queryFileNames()
+            return {
+                'isIncomplete': False,
+                'items': completions
+            }
+        return None
 
     @staticmethod
     def uriToPath(uri: Uri) -> Path:
@@ -375,6 +404,9 @@ class LanguageServer(pyls_jsonrpc.dispatchers.MethodDispatcher):
     def m_initialized(self, **kwargs: object) -> None:
         # Ignore this message to avoid logging a pointless warning
         pass
+
+    def m_text_document__completion(self, textDocument=None, position=None, **_kwargs):
+        return self.completions(textDocument['uri'], position)
 
     def m_text_document__resolve(
         self, fileName: str, docPath: str, resolveType: str
@@ -503,6 +535,8 @@ class LanguageServer(pyls_jsonrpc.dispatchers.MethodDispatcher):
         self.m_shutdown()
         self.m_exit()
 
+def flatten(list_of_lists):
+    return [item for lst in list_of_lists for item in lst]
 
 def start() -> None:
     stdin, stdout = sys.stdin.buffer, sys.stdout.buffer

@@ -30,7 +30,7 @@ import networkx
 import watchdog.events
 from typing_extensions import Protocol
 
-from . import gizaparser, n, rstparser, specparser, util
+from . import gizaparser, n, rstparser, specparser, util, lsp
 from .cache import Cache
 from .diagnostics import (
     CannotOpenFile,
@@ -1141,6 +1141,17 @@ class _Project:
     def get_full_path(self, fileid: FileId) -> Path:
         return self.config.source_path.joinpath(fileid)
 
+    def get_line_content(self, path: Path, line: int) -> str:
+        """Update page file (.txt) with current text and return fully populated page AST"""
+        # Get line content of page at specific line number
+        fileid = self.config.get_fileid(path)
+        post_metadata, post_diagnostics = self.pages.flush()
+        for fileid, diagnostics in post_diagnostics.items():
+            self.backend.on_diagnostics(fileid, diagnostics)
+        page = self.pages[fileid]
+        lines = page.source.splitlines()
+        return lines[line]
+
     def get_page_ast(self, path: Path) -> n.Node:
         """Update page file (.txt) with current text and return fully populated page AST"""
         # Get incomplete AST of page
@@ -1229,6 +1240,20 @@ class _Project:
             del giza_category[file_id]
 
         self.backend.on_delete(self.config.get_fileid(path), self.build_identifiers)
+
+    def queryFileNames(self) -> List[str]:
+        completions = []
+        paths = util.get_files(self.config.source_path, RST_EXTENSIONS)
+        for path in paths:
+            file, ext = os.path.splitext(path.relative_to(self.config.source_path))
+            completions.append({
+                'label': file,
+                'kind': lsp.CompletionItemKind.File,
+                'detail': str(path.absolute()),
+                'documentation': "",
+                'sortText': file
+            })
+        return completions
 
     def build(
         self, max_workers: Optional[int] = None, postprocess: bool = True
@@ -1407,6 +1432,11 @@ class Project:
         # _Project.root, which never changes after creation.
         return self._project.get_full_path(fileid)
 
+    def get_line_content(self, path: Path, position) -> str:
+        """Return line content of page with updated text"""
+        with self._lock:
+            return self._project.get_line_content(path, position)
+
     def get_page_ast(self, path: Path) -> n.Node:
         """Return complete AST of page with updated text"""
         with self._lock:
@@ -1431,6 +1461,9 @@ class Project:
         """Build the full project."""
         with self._lock:
             self._project.build(max_workers, postprocess)
+
+    def queryFileNames(self) -> List[str]:
+        return self._project.queryFileNames()
 
     def stop_monitoring(self) -> None:
         """Stop the filesystem monitoring thread associated with this project."""
