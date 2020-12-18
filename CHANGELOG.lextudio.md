@@ -1,3 +1,13 @@
+## [v1.8.4] - 2020-12-18
+
+### Added
+
+- Implemented file name autocompletion based on rstantlr ([GitHub-9](https://github.com/vscode-restructuredtext/snooty-parser/issues/9))
+
+### Fixed
+
+- Fixed the crash on `/` path ([GitHub-8](https://github.com/vscode-restructuredtext/snooty-parser/issues/8))
+
 ## [v1.8.3] - 2020-12-15
 
 ### Fixed
