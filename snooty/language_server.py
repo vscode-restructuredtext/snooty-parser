@@ -1,6 +1,7 @@
 import enum
 import logging
 import os
+from snooty.lsp import CompletionItemKind
 import sys
 import threading
 from urllib.parse import urlparse, unquote
@@ -150,6 +151,21 @@ class TextEdit:
 class TextDocumentEdit:
     textDocument: VersionedTextDocumentIdentifier
     edits: List[TextEdit]
+
+@checked
+@dataclass
+class CompletionItem:
+    label: str
+    kind: CompletionItemKind
+    detail: str
+    documentation: str
+    sortText: str
+
+@checked
+@dataclass
+class CompletionList:
+    isIncomplete: bool
+    items: List[CompletionItem]
 
 
 if sys.platform == "win32":
@@ -386,11 +402,10 @@ class LanguageServer(pyls_jsonrpc.dispatchers.MethodDispatcher):
         line_content = self.project.get_line_content(filePath, position["line"])
         column: int = position["character"]
         if column > 1 and line_content[column - 2:column] == '`/':
-            completions = self.project.queryFileNames()
-            return {
-                'isIncomplete': False,
-                'items': completions
-            }
+            completions = []
+            for name in self.project.queryFileNames():
+                completions.append(CompletionItem(name["file"], CompletionItemKind.File, name["path"], "", name["file"]))
+            return CompletionList(False, completions)
         return None
 
     @staticmethod
