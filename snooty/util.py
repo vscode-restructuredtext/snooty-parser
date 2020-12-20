@@ -104,6 +104,10 @@ def add_doc_target_ext(target: str, docpath: PurePath, project_root: Path) -> Pa
         # return directly if target is a folder.
         fileid, resolved_target_path = reroot_path(target_path, docpath, project_root)
         return resolved_target_path
+    # File already exists, like images
+    fileid, resolved_target_path = reroot_path(target_path, docpath, project_root)
+    if os.path.exists(resolved_target_path):
+        return resolved_target_path
     # Adding the current suffix first takes into account dotted targets
     last: Path = Path()
     for ext in RST_EXTENSIONS:
