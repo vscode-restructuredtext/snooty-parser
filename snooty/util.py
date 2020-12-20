@@ -113,9 +113,9 @@ def add_doc_target_ext(target: str, docpath: PurePath, project_root: Path) -> Pa
         new_suffix = target_path.suffix + ext
         temp_path = target_path.with_suffix(new_suffix)
 
-        fileid, resolved_target_path = reroot_path(temp_path, docpath, project_root)
-        if os.path.exists(resolved_target_path):
-            return resolved_target_path
+        fileid, resolved_target_path_suffix = reroot_path(temp_path, docpath, project_root)
+        if os.path.exists(resolved_target_path_suffix):
+            return resolved_target_path_suffix
     # If none of the files exists, return the original file path to trigger errors.
     return resolved_target_path
 
