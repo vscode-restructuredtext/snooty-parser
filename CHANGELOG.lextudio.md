@@ -1,3 +1,9 @@
+## [v1.8.6] - 2020-12-19
+
+### Fixed
+
+- Changed file path resolution so it only appends extensions when necessary. ([GitHub-10](https://github.com/vscode-restructuredtext/snooty-parser/issues/10))
+
 ## [v1.8.4] - 2020-12-18
 
 ### Added
