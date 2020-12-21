@@ -30,7 +30,7 @@ import networkx
 import watchdog.events
 from typing_extensions import Protocol
 
-from . import gizaparser, n, rstparser, specparser, util, lsp
+from . import gizaparser, n, rstparser, specparser, util
 from .cache import Cache
 from .diagnostics import (
     CannotOpenFile,
@@ -1239,7 +1239,7 @@ class _Project:
 
         self.backend.on_delete(self.config.get_fileid(path), self.build_identifiers)
 
-    def queryFileNames(self) -> List[Dict]:
+    def queryFileNames(self) -> List[Dict[str, str]]:
         completions = []
         paths = util.get_files(self.config.source_path, RST_EXTENSIONS)
         for path in paths:
@@ -1427,10 +1427,10 @@ class Project:
         # _Project.root, which never changes after creation.
         return self._project.get_full_path(fileid)
 
-    def get_line_content(self, path: Path, position) -> str:
+    def get_line_content(self, path: Path, line: int) -> str:
         """Return line content of page with updated text"""
         with self._lock:
-            return self._project.get_line_content(path, position)
+            return self._project.get_line_content(path, line)
 
     def get_page_ast(self, path: Path) -> n.Node:
         """Return complete AST of page with updated text"""
@@ -1457,7 +1457,7 @@ class Project:
         with self._lock:
             self._project.build(max_workers, postprocess)
 
-    def queryFileNames(self) -> List[Dict]:
+    def queryFileNames(self) -> List[Dict[str, str]]:
         return self._project.queryFileNames()
 
     def stop_monitoring(self) -> None:

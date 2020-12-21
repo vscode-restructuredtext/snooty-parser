@@ -156,7 +156,7 @@ class TextDocumentEdit:
 @dataclass
 class CompletionItem:
     label: str
-    kind: CompletionItemKind
+    kind: int
     detail: str
     documentation: str
     sortText: str
@@ -389,7 +389,7 @@ class LanguageServer(pyls_jsonrpc.dispatchers.MethodDispatcher):
             }
         }
 
-    def completions(self, doc_uri, position):
+    def completions(self, doc_uri: Uri, position: Position) -> Union[CompletionList, None]:
         """
         Given the filename, return the completion items of the page.
         """
@@ -399,8 +399,8 @@ class LanguageServer(pyls_jsonrpc.dispatchers.MethodDispatcher):
             return None
 
         filePath = self.uriToPath(doc_uri)
-        line_content = self.project.get_line_content(filePath, position["line"])
-        column: int = position["character"]
+        line_content = self.project.get_line_content(filePath, position.line)
+        column: int = position.character
         if column > 1 and line_content[column - 2:column] == '`/':
             completions = []
             for name in self.project.queryFileNames():
@@ -420,8 +420,8 @@ class LanguageServer(pyls_jsonrpc.dispatchers.MethodDispatcher):
         # Ignore this message to avoid logging a pointless warning
         pass
 
-    def m_text_document__completion(self, textDocument=None, position=None, **_kwargs):
-        return self.completions(textDocument['uri'], position)
+    def m_text_document__completion(self, textDocument: TextDocumentItem, position: Position, **_kwargs: object) -> Union[CompletionList, None]:
+        return self.completions(textDocument.uri, position)
 
     def m_text_document__resolve(
         self, fileName: str, docPath: str, resolveType: str
@@ -549,9 +549,6 @@ class LanguageServer(pyls_jsonrpc.dispatchers.MethodDispatcher):
     def __exit__(self, *args: object) -> None:
         self.m_shutdown()
         self.m_exit()
-
-def flatten(list_of_lists):
-    return [item for lst in list_of_lists for item in lst]
 
 def start() -> None:
     stdin, stdout = sys.stdin.buffer, sys.stdout.buffer

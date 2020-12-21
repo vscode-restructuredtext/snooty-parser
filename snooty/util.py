@@ -50,7 +50,10 @@ def reroot_path(
         rel_fn = FileId(*filename.parts[1:])
     else:
         rel_fn = FileId(*docpath.parent.joinpath(filename).parts).collapse_dots()
-    return rel_fn, project_root.joinpath(rel_fn).resolve()
+    try:
+        return rel_fn, project_root.joinpath(rel_fn).resolve()
+    except ValueError:
+        return rel_fn, Path(filename)
 
 
 def get_files(root: PurePath, extensions: Container[str]) -> Iterator[Path]:
