@@ -1244,10 +1244,7 @@ class _Project:
         paths = util.get_files(self.config.source_path, RST_EXTENSIONS)
         for path in paths:
             file, ext = os.path.splitext(path.relative_to(self.config.source_path))
-            completions.append({
-                "file": file,
-                "path": str(path.absolute())
-            })
+            completions.append({"file": file, "path": str(path.absolute())})
         return completions
 
     def build(

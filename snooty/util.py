@@ -103,7 +103,7 @@ def add_doc_target_ext(target: str, docpath: PurePath, project_root: Path) -> Pa
     """Given the target file of a doc role, add the appropriate extension and return full file path"""
     # Add .txt or .rst to end of doc role target path
     target_path = PurePosixPath(target)
-    if (target.endswith('/')):
+    if target.endswith("/"):
         # return directly if target is a folder.
         fileid, resolved_target_path = reroot_path(target_path, docpath, project_root)
         return resolved_target_path
@@ -116,7 +116,9 @@ def add_doc_target_ext(target: str, docpath: PurePath, project_root: Path) -> Pa
         new_suffix = target_path.suffix + ext
         temp_path = target_path.with_suffix(new_suffix)
 
-        fileid, resolved_target_path_suffix = reroot_path(temp_path, docpath, project_root)
+        fileid, resolved_target_path_suffix = reroot_path(
+            temp_path, docpath, project_root
+        )
         if os.path.exists(resolved_target_path_suffix):
             return resolved_target_path_suffix
     # If none of the files exists, return the original file path to trigger errors.

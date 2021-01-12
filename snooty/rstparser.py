@@ -821,6 +821,39 @@ class DeprecatedVersionDirective(BaseVersionDirective):
     optional_arguments = 1
 
 
+class IgnoreDirective(docutils.parsers.rst.Directive):
+    """Variant of BaseVersionDirective for the deprecated directive, which does not
+       require an argument."""
+
+    required_arguments = 0
+    optional_arguments = 1
+
+    def run(self) -> List[docutils.nodes.Node]:
+        source, line = self.state_machine.get_source_and_line(self.lineno)
+        node = directive("", self.name)
+        node.document = self.state.document
+        node.source, node.line = source, line
+        node["options"] = self.options
+
+        if self.arguments:
+            arguments = " ".join(self.arguments).split(None, 1)
+            textnodes = []
+            for argument_text in arguments:
+                text, messages = self.state.inline_text(argument_text, self.lineno)
+                textnodes.extend(text)
+            argument = directive_argument("", "", *textnodes)
+            argument.document = self.state.document
+            argument.source, argument.line = source, line
+            node.append(argument)
+
+        if self.content:
+            self.state.nested_parse(
+                self.content, self.state_machine.line_offset, node, match_titles=True
+            )
+
+        return [node]
+
+
 class BaseTocTreeDirective(docutils.parsers.rst.Directive):
     """Special handling for toctree directives.
 
@@ -1003,6 +1036,7 @@ SPECIAL_DIRECTIVE_HANDLERS: Dict[str, Type[docutils.parsers.rst.Directive]] = {
     "deprecated": DeprecatedVersionDirective,
     "card-group": BaseCardGroupDirective,
     "toctree": BaseTocTreeDirective,
+    "uml": IgnoreDirective,
 }
 
 
