@@ -1021,10 +1021,6 @@ type = "explicit_title"
 help = """Show a FontAwesome 4 icon."""
 type = "explicit_title"
 
-[role.xml]
-help = """Use XML to create reStructuredText nodes."""
-type = "text"
-
 [role.rfc]
 help = """Reference an IETF RFC."""
 type = {link = "https://tools.ietf.org/html/%s"}
@@ -1170,19 +1166,23 @@ type = {link = "https://mongodb.github.io/mongo-csharp-driver/2.10/apidocs/html/
 
 [role.java-docs]
 help = """Link to the Java driver's documentation."""
-type = {link = "http://mongodb.github.io/mongo-java-driver/4.1/%s"}
+type = {link = "https://mongodb.github.io/mongo-java-driver/4.2/%s"}
 
 [role.java-async-docs]
 help = """Link to the async Java driver's documentation."""
-type = {link = "https://mongodb.github.io/mongo-java-driver/4.1/driver-reactive/%s"}
+type = {link = "https://mongodb.github.io/mongo-java-driver/4.2/driver-reactive/%s"}
 
 [role.java-async-api]
 help = """Link to the async Java driver's API reference."""
-type = {link = "http://mongodb.github.io/mongo-java-driver/4.1/apidocs/mongodb-driver-reactivestreams/%s"}
+type = {link = "https://mongodb.github.io/mongo-java-driver/4.2/apidocs/mongodb-driver-reactivestreams/%s"}
+
+[role.java-core-api]
+help = """Link to the core Java driver's API reference."""
+type = {link = "https://mongodb.github.io/mongo-java-driver/4.2/apidocs/mongodb-driver-core/%s"}
 
 [role.java-sync-api]
 help = """Link to the synchronous Java driver's API reference."""
-type = {link = "http://mongodb.github.io/mongo-java-driver/4.1/apidocs/mongodb-driver-sync/%s"}
+type = {link = "https://mongodb.github.io/mongo-java-driver/4.2/apidocs/mongodb-driver-sync/%s"}
 
 [role.go-api]
 help = """Link to the Go driver's API reference."""
@@ -1619,21 +1619,22 @@ platforms = [
 drivers = [
   {id = "shell", title = "Mongo Shell"},
   {id = "compass", title = "Compass"},
-  {id = "python", title = "Python"},
-  {id = "java-sync", title = "Java (Sync)"},
-  {id = "nodejs", title = "Node.js"},
-  {id = "php", title = "PHP"},
-  {id = "motor", title = "Motor"},
-  {id = "java-async", title = "Java (Async)"},
   {id = "c", title = "C"},
   {id = "cpp", title = "C++11"},
   {id = "csharp", title = "C#"},
-  {id = "perl", title = "Perl"},
-  {id = "ruby", title = "Ruby"},
-  {id = "scala", title = "Scala"},
   {id = "go", title = "Go"},
-  {id = "swift-sync", title = "Swift (Sync)"},
+  {id = "java-async", title = "Java (Async)"},
+  {id = "java-sync", title = "Java (Sync)"},
+  {id = "motor", title = "Motor"},
+  {id = "nodejs", title = "Node.js"},
+  {id = "perl", title = "Perl"},
+  {id = "php", title = "PHP"},
+  {id = "python", title = "Python"},
+  {id = "ruby", title = "Ruby"},
+  {id = "rust", title = "Rust"},
+  {id = "scala", title = "Scala"},
   {id = "swift-async", title = "Swift (Async)"},
+  {id = "swift-sync", title = "Swift (Sync)"},
 ]
 auth = [
   {id = "uidpwd", title = "Username and Password"},
