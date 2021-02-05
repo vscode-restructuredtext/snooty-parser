@@ -932,6 +932,10 @@ example = """.. topic:: ${1:Title of block}
 help = """Shows search results from browser query params (no arguments)."""
 
 ###### Roles
+[role.code]
+help = """Used to show inline code fragment."""
+type = "text"
+
 [role.kbd]
 help = """Mark a sequence of keystrokes."""
 type = "text"
