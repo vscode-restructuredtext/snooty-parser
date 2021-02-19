@@ -7,9 +7,63 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v0.9.2] - 2021-02-03
+
+### Fixed
+
+- Tarball bundles now contain members with 644 permissions.
+
+## [v0.9.1] - 2021-02-03
+
 ### Added
 
-- Handle include subsets in postprocessor (DOP-323)
+- Permit tarballing of manpages (DOP-1816).
+
+### Changed
+
+- Reorder drivers tabs (DOP-1958).
+
+### Removed
+
+- The `:xml:` role, which was never implemented, is now removed from rstspec.toml.
+
+## [v0.9.0] - 2021-01-28
+
+### Added
+
+- Allow "reusable" references (DOP-1857).
+
+### Changed
+
+- `rstspec.toml` updates.
+
+## [v0.8.5] - 2021-01-14
+
+### Added
+
+- Support for the `~` tag on roles to cut off all but the last `.`-delimited segment (DOP-1806).
+
+### Fixed
+
+- Fix altering giza substitutions in inheriting nodes (DOP-1875).
+
+## [v0.8.4] - 2021-01-06
+
+### Fixed
+
+- Don't crash upon building a manpage containing comments ([DOP-1874](https://jira.mongodb.com/browse/DOP-1874)).
+
+## [v0.8.3] - 2021-01-06
+
+### Added
+
+- Build manpages ([DOP-1584](https://jira.mongodb.com/browse/DOP-1584))
+- Support for include options and subsets in postprocessor ([DOP-323](https://jira.mongodb.com/browse/DOP-323))
+- Update driver, compass, ecosystem, and Realm SDK roles to point to correct URLs ([DOP-1777](https://jira.mongodb.com/browse/DOP-1777))
+
+### Fixed
+
+- Handling of invalid tabs (parser no longer crashes, uses correct diagnostic levels)
 
 ## [v0.8.2] - 2020-12-02
 

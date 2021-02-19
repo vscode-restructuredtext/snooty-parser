@@ -4,8 +4,8 @@ from typing import Dict, List, Optional, Tuple
 from ..diagnostics import Diagnostic
 from ..page import Page
 from ..parser import EmbeddedRstParser
-from ..types import ProjectConfig
-from ..util_test import ast_to_testing_string, check_ast_testing_string
+from ..types import FileId, ProjectConfig
+from ..util_test import ast_to_testing_string, check_ast_testing_string, make_test
 from .steps import GizaStepsCategory
 
 
@@ -57,11 +57,13 @@ def test_step() -> None:
         <reference refuri="https://en.wikipedia.org/wiki/Package_manager">
         <text>package management system</text>
         </reference>
+        <named_reference refname="package management system" refuri="https://en.wikipedia.org/wiki/Package_manager" />
     </heading>
     <paragraph>
         <text>Issue the following command to import the\n</text>
         <reference refuri="https://www.mongodb.org/static/pgp/server-3.4.asc">
         <text>MongoDB public GPG Key</text></reference>
+        <named_reference refname="MongoDB public GPG Key" refuri="https://www.mongodb.org/static/pgp/server-3.4.asc" />
     </paragraph></section></directive>
 <directive name="step">
     <section>
@@ -100,4 +102,54 @@ def test_step() -> None:
     echo "mongodb-org hold" | sudo dpkg --set-selections
     </code><paragraph><text>bye</text></paragraph></section></directive>
 </directive></root>""",
+    )
+
+
+def test_overriding_replacements() -> None:
+    with make_test(
+        {
+            Path(
+                "source/includes/steps-configure-mcli.yaml"
+            ): """
+title: "Create a profile."
+stepnum: 0
+level: 4
+ref: create-profile
+replacement:
+  serviceOption: ""
+content: |
+
+  foo{{serviceOption}}
+...
+""",
+            Path(
+                "source/includes/steps-configure-mcli-cm.yaml"
+            ): """
+stepnum: 1
+ref: create-profile-cm
+source:
+  file: steps-configure-mcli.yaml
+  ref: create-profile
+replacement:
+  serviceOption: "bar"
+...
+""",
+        }
+    ) as result:
+        assert all(not x for x in result.diagnostics.values())
+        page = result.pages[FileId("includes/steps/configure-mcli-cm.rst")]
+    check_ast_testing_string(
+        page.ast,
+        """
+<root fileid="includes/steps-configure-mcli-cm.yaml">
+    <directive name="steps">
+        <directive name="step">
+            <section>
+                <heading id="create-a-profile"><text>Create a profile.</text></heading>
+                <paragraph><text>foobar</text></paragraph>
+            </section>
+        </directive>
+    </directive>
+</root>
+""",
     )

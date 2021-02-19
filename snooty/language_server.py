@@ -152,6 +152,7 @@ class TextDocumentEdit:
     textDocument: VersionedTextDocumentIdentifier
     edits: List[TextEdit]
 
+
 @checked
 @dataclass
 class CompletionItem:
@@ -161,12 +162,18 @@ class CompletionItem:
     documentation: str
     sortText: str
 
+
 @checked
 @dataclass
 class CompletionList:
     isIncomplete: bool
     items: List[CompletionItem]
 
+@checked
+@dataclass
+class WorkspaceFolder:
+    uri: Uri
+    name: str
 
 if sys.platform == "win32":
     import ctypes
@@ -326,6 +333,12 @@ class LanguageServer(pyls_jsonrpc.dispatchers.MethodDispatcher):
             params={"uri": uri, "diagnostics": workspace_item.create_lsp_diagnostics()},
         )
 
+    def _get_configuration(self) -> List[any]:
+        response = self._endpoint.request("workspace/configuration", params=[{ "section": "snooty" }]).result(timeout=10)
+        if response is None:
+            return [""]
+        return response
+
     def uri_to_fileid(self, uri: Uri) -> FileId:
         if not self.project:
             raise TypeError("Cannot map uri to fileid before a project is open")
@@ -347,9 +360,11 @@ class LanguageServer(pyls_jsonrpc.dispatchers.MethodDispatcher):
         self,
         processId: Optional[int] = None,
         rootUri: Optional[Uri] = None,
+        workspaceFolders: Optional[List[WorkspaceFolder]] = None,
+        initializationOptions = object,
         **kwargs: object,
     ) -> SerializableType:
-        if rootUri:            
+        if rootUri:
             root_path = self.uriToPath(rootUri)
             self.project = Project(root_path, self.backend, {})
             self.notify_diagnostics()
@@ -379,17 +394,18 @@ class LanguageServer(pyls_jsonrpc.dispatchers.MethodDispatcher):
             watching_thread.start()
 
         return {
-            "capabilities":
-            {
+            "capabilities": {
                 "textDocumentSync": 1,
                 "completionProvider": {
-                    "resolveProvider": False, # We know everything ahead of time
-                    "TriggerCharacters": ['/']
-                }
+                    "resolveProvider": False,  # We know everything ahead of time
+                    "TriggerCharacters": ["/"],
+                },
             }
         }
 
-    def completions(self, doc_uri: Uri, position: Position) -> Union[CompletionList, None]:
+    def completions(
+        self, doc_uri: Uri, position: Position
+    ) -> Union[CompletionList, None]:
         """
         Given the filename, return the completion items of the page.
         """
@@ -399,12 +415,20 @@ class LanguageServer(pyls_jsonrpc.dispatchers.MethodDispatcher):
             return None
 
         filePath = self.uriToPath(doc_uri)
-        line_content = self.project.get_line_content(filePath, position.line)
-        column: int = position.character
-        if column > 1 and line_content[column - 2:column] == '`/':
+        line_content = self.project.get_line_content(filePath, position["line"])
+        column: int = position["character"]
+        if column > 1 and line_content[column - 2 : column] == "`/":
             completions = []
             for name in self.project.queryFileNames():
-                completions.append(CompletionItem(name["file"], CompletionItemKind.File, name["path"], "", name["file"]))
+                completions.append(
+                    CompletionItem(
+                        name["file"],
+                        CompletionItemKind.File,
+                        name["path"],
+                        "",
+                        name["file"],
+                    )
+                )
             return CompletionList(False, completions)
         return None
 
@@ -412,16 +436,18 @@ class LanguageServer(pyls_jsonrpc.dispatchers.MethodDispatcher):
     def uriToPath(uri: Uri) -> Path:
         parsed = urlparse(uri)
         host = "{0}{0}{mnt}{0}".format(os.path.sep, mnt=parsed.netloc)
-        return Path(os.path.abspath(
-            os.path.join(host, url2pathname(unquote(parsed.path)))
-        ))
+        return Path(
+            os.path.abspath(os.path.join(host, url2pathname(unquote(parsed.path))))
+        )
 
     def m_initialized(self, **kwargs: object) -> None:
         # Ignore this message to avoid logging a pointless warning
         pass
 
-    def m_text_document__completion(self, textDocument: TextDocumentItem, position: Position, **_kwargs: object) -> Union[CompletionList, None]:
-        return self.completions(textDocument.uri, position)
+    def m_text_document__completion(
+        self, textDocument: TextDocumentItem, position: Position, **_kwargs: object
+    ) -> Union[CompletionList, None]:
+        return self.completions(textDocument["uri"], position)
 
     def m_text_document__resolve(
         self, fileName: str, docPath: str, resolveType: str
@@ -549,6 +575,7 @@ class LanguageServer(pyls_jsonrpc.dispatchers.MethodDispatcher):
     def __exit__(self, *args: object) -> None:
         self.m_shutdown()
         self.m_exit()
+
 
 def start() -> None:
     stdin, stdout = sys.stdin.buffer, sys.stdout.buffer

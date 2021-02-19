@@ -15,7 +15,7 @@ requires-python = "~= 3.7"
 requires = [
     "pymongo[srv,tls] ~= 3.11.1",
     "docutils ~= 0.16",
-    "watchdog ~= 0.10",
+    "watchdog ~= 1.0.1",
     "requests ~= 2.24",
     "toml ~= 0.10",
     "pyyaml ~= 5.3",

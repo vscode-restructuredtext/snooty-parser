@@ -1,12 +1,14 @@
 import collections
 import errno
 import getpass
+import io
 import logging
 import multiprocessing
 import os
 import re
 import subprocess
 import threading
+import time
 from copy import deepcopy
 from dataclasses import dataclass
 from functools import partial
@@ -21,6 +23,7 @@ from typing import (
     Optional,
     Set,
     Tuple,
+    Union,
     cast,
 )
 
@@ -31,6 +34,7 @@ import watchdog.events
 from typing_extensions import Protocol
 
 from . import gizaparser, n, rstparser, specparser, util
+from .builders import man
 from .cache import Cache
 from .diagnostics import (
     CannotOpenFile,
@@ -50,6 +54,7 @@ from .diagnostics import (
     UnexpectedIndentation,
     UnknownTabID,
     UnknownTabset,
+    UnsupportedFormat,
 )
 from .gizaparser.nodes import GizaCategory
 from .gizaparser.published_branches import PublishedBranches, parse_published_branches
@@ -68,6 +73,35 @@ from .util import RST_EXTENSIONS
 
 NO_CHILDREN = (n.SubstitutionReference,)
 logger = logging.getLogger(__name__)
+
+
+def bundle(
+    filename: PurePath, members: Iterable[Tuple[str, Union[str, bytes]]]
+) -> bytes:
+    if filename.suffixes[-2:] == [".tar", ".gz"] or filename.suffixes[-1] == ".tar":
+        import tarfile
+
+        compression_flag = "gz" if filename.suffix == ".gz" else "::"
+
+        current_time = time.time()
+        output_file = io.BytesIO()
+        with tarfile.open(
+            None, f"w:{compression_flag}", output_file, format=tarfile.PAX_FORMAT
+        ) as tf:
+            for member_name, member_data in members:
+                if isinstance(member_data, str):
+                    member_data = bytes(member_data, "utf-8")
+                member_file = io.BytesIO(member_data)
+                tar_info = tarfile.TarInfo(name=member_name)
+                tar_info.size = len(member_data)
+                tar_info.mtime = int(current_time)
+                tar_info.mode = 0o644
+                tf.addfile(tar_info, member_file)
+
+        return output_file.getvalue()
+
+    else:
+        raise ValueError(f"Unknown bundling format: {filename.as_posix()}")
 
 
 @dataclass
@@ -221,9 +255,7 @@ class JSONVisitor:
             )
             raise docutils.nodes.SkipDeparture()
         elif isinstance(node, rstparser.target_directive):
-            self.state.append(
-                n.Target((line,), [], node["domain"], node["name"], None, None)
-            )
+            self.state.append(n.Target((line,), [], node["domain"], node["name"], None))
         elif isinstance(node, rstparser.directive):
             directive = self.handle_directive(node, line)
             if directive:
@@ -273,17 +305,18 @@ class JSONVisitor:
             assert (
                 len(node["ids"]) <= 1
             ), f"Too many ids in this node: {self.docpath} {node}"
-            if "refuri" in node:
-                raise docutils.nodes.SkipNode()
-
             if not node["ids"]:
                 self.diagnostics.append(InvalidURL(util.get_line(node)))
                 raise docutils.nodes.SkipNode()
 
             node_id = node["names"][0]
+
+            if "refuri" in node:
+                self.state.append(n.NamedReference((line,), node_id, node["refuri"]))
+                return
+
             children: Any = [n.TargetIdentifier((line,), [], [node_id])]
-            refuri = node["refuri"] if "refuri" in node else None
-            self.state.append(n.Target((line,), children, "std", "label", refuri, None))
+            self.state.append(n.Target((line,), children, "std", "label", None))
         elif isinstance(node, rstparser.target_identifier):
             self.state.append(n.TargetIdentifier((line,), [], node["ids"]))
         elif isinstance(node, docutils.nodes.definition_list):
@@ -435,7 +468,7 @@ class JSONVisitor:
                 term_text = "".join(term.get_text() for term in item.term)
                 identifier = n.TargetIdentifier(item.start, [], [term_text])
                 identifier.children = item.term[:]
-                target = n.InlineTarget(item.start, [], "std", "term", None, None)
+                target = n.InlineTarget(item.start, [], "std", "term", None)
                 target.children = [identifier]
                 item.term.append(target)
 
@@ -1002,6 +1035,12 @@ class PageDatabase:
         self.parsed[key] = value
         self.__changed_pages.add(key)
 
+    def get(self, key: FileId) -> Optional[Page]:
+        try:
+            return self[key]
+        except KeyError:
+            return None
+
     def __getitem__(self, key: FileId) -> Page:
         """If the postprocessor has been run since modifications were made, fetch a postprocessed page."""
         assert not self.__changed_pages
@@ -1244,10 +1283,7 @@ class _Project:
         paths = util.get_files(self.config.source_path, RST_EXTENSIONS)
         for path in paths:
             file, ext = os.path.splitext(path.relative_to(self.config.source_path))
-            completions.append({
-                "file": file,
-                "path": str(path.absolute())
-            })
+            completions.append({"file": file, "path": str(path.absolute())})
         return completions
 
     def build(
@@ -1317,12 +1353,11 @@ class _Project:
         if postprocess:
             post_metadata, post_diagnostics = self.pages.flush()
 
-            static_files = {
+            static_files: Dict[str, Union[str, bytes]] = {
                 "objects.inv": self.targets.generate_inventory("").dumps(
                     self.config.name, ""
                 )
             }
-            post_metadata["static_files"] = static_files
 
             with util.PerformanceLogger.singleton().start("commit"):
                 for fileid, page in self.pages.items():
@@ -1331,6 +1366,39 @@ class _Project:
                     )
                 self.backend.flush()
 
+            # Build manpages
+            manpages: List[Tuple[str, str]] = []
+            for name, definition in self.config.manpages.items():
+                fileid = FileId(definition.file)
+                manpage_page = self.pages.get(fileid)
+                if not manpage_page:
+                    self.backend.on_diagnostics(
+                        FileId(self.config.config_path.relative_to(self.config.root)),
+                        [CannotOpenFile(Path(fileid), "Page not found", 0)],
+                    )
+                    continue
+                for filename, rendered in man.render(
+                    manpage_page, name, definition.title, definition.section
+                ).items():
+                    manpages.append((filename.as_posix(), rendered))
+                    static_files[filename.as_posix()] = rendered
+
+            if manpages and self.config.bundle.manpages:
+                try:
+                    static_files[self.config.bundle.manpages] = bundle(
+                        PurePath(self.config.bundle.manpages), manpages
+                    )
+                except ValueError:
+                    self.backend.on_diagnostics(
+                        FileId(self.config.config_path.relative_to(self.config.root)),
+                        [
+                            UnsupportedFormat(
+                                self.config.bundle.manpages, (".tar", ".tar.gz"), 0
+                            )
+                        ],
+                    )
+
+            post_metadata["static_files"] = static_files
             for fileid, diagnostics in post_diagnostics.items():
                 self.backend.on_diagnostics(fileid, diagnostics)
 

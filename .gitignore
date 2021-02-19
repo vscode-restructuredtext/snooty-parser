@@ -10,4 +10,4 @@ htmlcov/
 .venv/
 dist/
 .docs
-.vscode/launch.json
+.vscode
