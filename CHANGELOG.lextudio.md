@@ -1,3 +1,13 @@
+## [v1.8.8] - 2021-02-19
+
+### Fixed
+
+- Added code role. ([GitHub-18](https://github.com/vscode-restructuredtext/snooty-parser/issues/18))
+
+### Changed
+
+- Sync up with upstream.
+
 ## [v1.8.7] - 2021-02-05
 
 ### Fixed
