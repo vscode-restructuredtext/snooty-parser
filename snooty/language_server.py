@@ -415,8 +415,8 @@ class LanguageServer(pyls_jsonrpc.dispatchers.MethodDispatcher):
             return None
 
         filePath = self.uriToPath(doc_uri)
-        line_content = self.project.get_line_content(filePath, position.line)
-        column: int = position.character
+        line_content = self.project.get_line_content(filePath, position["line"])
+        column: int = position["character"]
         if column > 1 and line_content[column - 2 : column] == "`/":
             completions = []
             for name in self.project.queryFileNames():
@@ -447,7 +447,7 @@ class LanguageServer(pyls_jsonrpc.dispatchers.MethodDispatcher):
     def m_text_document__completion(
         self, textDocument: TextDocumentItem, position: Position, **_kwargs: object
     ) -> Union[CompletionList, None]:
-        return self.completions(textDocument.uri, position)
+        return self.completions(textDocument["uri"], position)
 
     def m_text_document__resolve(
         self, fileName: str, docPath: str, resolveType: str
