@@ -1,3 +1,13 @@
+## [v1.8.9] - 2021-02-20
+
+### Fixed
+
+- Added a few more common roles.
+
+### Changed
+
+- Sync up with upstream.
+
 ## [v1.8.8] - 2021-02-19
 
 ### Fixed
