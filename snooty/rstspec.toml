@@ -997,6 +997,62 @@ type = "text"
 help = """Describe the titles of books, periodicals, and other materials."""
 type = "text"
 
+[role.download]
+help = """Link to files within your source tree that are not reST documents that can be viewed, but files that can be downloaded."""
+type = "text"
+
+[role.numref]
+help = """Link to files within your source tree that are not reST documents that can be viewed, but files that can be downloaded."""
+type = "text"
+
+[role.token]
+help = """The name of a grammar token."""
+type = "text"
+
+[role.keyword]
+help = """The name of a keyword in Python."""
+type = "text"
+
+[role.eq]
+help = """Same as math:numref."""
+type = "text"
+
+[role.dfn]
+help = """Mark the defining instance of a term in the text."""
+type = "text"
+
+[role.mailheader]
+help = """The name of an RFC 822-style mail header."""
+type = "text"
+
+[role.makevar]
+help = """The name of a make variable."""
+type = "text"
+
+[role.manpage]
+help = """A reference to a Unix manual page including the section."""
+type = "text"
+
+[role.manuselection]
+help = """Mark a complete sequence of menu selections."""
+type = "text"
+
+[role.mimetype]
+help = """The name of a MIME type, or a component of a MIME type."""
+type = "text"
+
+[role.newsgroup]
+help = """The name of a Usenet newsgroup."""
+type = "text"
+
+[role.regexp]
+help = """A regular expression."""
+type = "text"
+
+[role.pep]
+help = """A reference to a Python Enhancement Proposal."""
+type = "text"
+
 [role.kbd]
 help = """Mark a sequence of keystrokes."""
 type = "text"
