@@ -965,8 +965,36 @@ example = """.. topic:: ${1:Title of block}
 help = """Shows search results from browser query params (no arguments)."""
 
 ###### Roles
+[role.emphasis]
+help = """Implement emphasis."""
+type = "text"
+
+[role.literal]
+help = """Implement inline literal text."""
+type = "text"
+
 [role.code]
-help = """Used to show inline code fragment."""
+help = """Mark its content as code in a formal language."""
+type = "text"
+
+[role.math]
+help = """Mark its content as mathematical notation (inline formula)."""
+type = "text"
+
+[role.pep-reference]
+help = """Create an HTTP reference to a PEP (Python Enhancement Proposal)."""
+type = "text"
+
+[role.rfc-reference]
+help = """Create an HTTP reference to an RFC (Internet Request for Comments)."""
+type = "text"
+
+[role.strong]
+help = """Implement strong emphasis."""
+type = "text"
+
+[role.title-reference]
+help = """Describe the titles of books, periodicals, and other materials."""
 type = "text"
 
 [role.kbd]
@@ -987,6 +1015,10 @@ type = "text"
 
 [role."highlight-blue"]
 help = """Highlight text with a blue background"""
+type = "text"
+
+[role.subscript]
+help = """Used to denote subscript text."""
 type = "text"
 
 [role.sub]
