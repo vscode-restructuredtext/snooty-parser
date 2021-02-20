@@ -2,15 +2,16 @@
 version = 0
 
 [enum]
-user_level = ["beginner", "intermediate", "advanced"]
-backlinks = ["entry", "top", "none"]
-guide_categories = ["Getting Started"]
 alignment = ["left", "center", "right"]
+backlinks = ["entry", "top", "none"]
 card_type = ["small", "large"]
-output_format = ["html"]
-devhub_type = ["article", "quickstart", "how-to", "video", "live"]
+card_style = ["default", "compact"]
 charts_theme = ["light", "dark"]
+devhub_type = ["article", "quickstart", "how-to", "video", "live"]
+guide_categories = ["Getting Started"]
 mws_version = ["3.4", "3.6", "4.0", "4.2", "4.4", "latest"]
+output_format = ["html"]
+user_level = ["beginner", "intermediate", "advanced"]
 
 [directive.default-domain]
 argument_type = "string"
@@ -160,7 +161,7 @@ options.depth = "nonnegative_integer"
 options.class = "string"
 example = """.. contents:: ${1:string}
    ${2::local: (Optional)}
-   :backlinks: ${3|entry,top,none}
+   :backlinks: ${3|entry,top,none|}
    :depth: ${4:1 (Optional)}
    :class: ${5:Fancy (Optional)}
 """
@@ -625,6 +626,7 @@ example = """.. mongo-web-shell::
 [directive."mongodb:openapi"]
 help = """Include a reStructuredText file's contents."""
 argument_type = ["path", "uri"]
+options.uses-rst = "flag"
 
 [directive."mongodb:operation"]
 content_type = "block"
@@ -781,30 +783,31 @@ argument_type = "string"
 inherit = "_landing-base"
 content_type = "block"
 
-[directive."landing:introduction"]
-inherit = "_landing-block"
-
-[directive."landing:cta"]
-help = "Call to action directing users to a new part of the site"
-example = """..cta::
-
-   ${0::manual:`Read the Introduction to MongoDB </introduction>`}
-"""
-inherit = "_landing-block"
+[directive."landing:button"]
+help = 'Make a button.'
+example = '''.. button:: ${1: string}
+:uri: ${2:/path or url}
+:class: ${3: left-column (Optional)}'''
+argument_type = 'string'
+content_type = '_landing-block'
+options.uri = { type = ['path', 'uri'], required = true }
+options.class = { required = true, type = 'string' }
 
 [directive."landing:card-group"]
 inherit = "_landing-block"
 help = """Container to hold a group of cards"""
 options.columns = "nonnegative_integer"
+options.style = "card_style"
 example = """.. card-group::
    ${1::columns: 2}
+   :style: ${2:|default,compact| (Optional)}
 
-   $0
+   ${0: Card content}
 """
 
 [directive."landing:card"]
 example = """.. card::
-   :headline: ${1:Run a self-managed database}
+   :headline: ${1:Run a self-managed database (Optional)}
    :cta: ${2:Get started with MongoDB}
    :url: {$3:url-card-should-link-to}
    ${4::icon: /path-to-icon.svg
@@ -821,6 +824,36 @@ options.url = "uri"
 options.icon = ["path", "uri"]
 options.icon-alt = "string"
 options.tag = "string"
+
+[directive."landing:cta"]
+help = "Call to action directing users to a new part of the site"
+example = """..cta::
+
+   ${0::manual:`Read the Introduction to MongoDB </introduction>`}
+"""
+inherit = "_landing-block"
+
+[directive."landing:introduction"]
+inherit = "_landing-block"
+
+[directive."landing:kicker"]
+help = 'Make a kicker (a subheader that is placed on top of the main header).'
+example = '''.. kicker:: ${1: string}'''
+argument_type = 'string'
+content_type = '_landing-block'
+
+[directive."landing:procedure"]
+help = "Make a set of numbered steps."
+example = '''.. procedure::
+${0: Steps content}'''
+content_type = '_landing-block'
+
+[directive."landing:step"]
+help = 'Make a single, numbered step.'
+example = '''.. step::
+${0: Single step’s content}'''
+content_type = '_landing-block'
+
 
 ###### Misc.
 [directive.atf-image]

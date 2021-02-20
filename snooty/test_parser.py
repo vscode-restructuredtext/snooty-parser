@@ -38,27 +38,40 @@ def test_tabs() -> None:
     check_ast_testing_string(
         page.ast,
         """<root fileid="test_tabs.rst">
-        <directive name="tabs" hidden="True"><directive name="tab" tabid="bionic"><text>Ubuntu 18.04 (Bionic)</text>
-        <paragraph><text>Bionic content</text></paragraph></directive>
-        <directive name="tab" tabid="xenial"><text>Ubuntu 16.04 (Xenial)</text><paragraph><text>
-        Xenial content</text></paragraph></directive>
-        <directive name="tab" tabid="trusty"><text>Ubuntu 14.04 (Trusty)</text><paragraph><text>
-        Trusty content</text></paragraph></directive></directive>
+
+        <directive name="tabs" hidden="True">
+            <directive name="tab" tabid="bionic">
+                <text>Ubuntu 18.04 (Bionic)</text>
+                <paragraph><text>Bionic content</text></paragraph>
+            </directive>
+            <directive name="tab" tabid="xenial">
+                <text>Ubuntu 16.04 (Xenial)</text>
+                <paragraph><text>Xenial content</text></paragraph>
+            </directive>
+            <directive name="tab" tabid="trusty">
+                <text>Ubuntu 14.04 (Trusty)</text>
+                <paragraph><text>Trusty content</text></paragraph>
+            </directive>
+        </directive>
 
         <directive name="tabs" tabset="platforms">
-            <directive name="tab" tabid="windows"><text>Windows</text>
+            <directive name="tab" tabid="windows">
+                <text>Windows</text>
                 <paragraph><text>Windows content</text></paragraph>
             </directive>
         </directive>
 
         <directive name="tabs" tabset="platforms">
-            <directive name="tab" tabid="windows"><text>Windows</text>
+            <directive name="tab" tabid="windows">
+                <text>Windows</text>
                 <paragraph><text>Windows Content</text></paragraph>
             </directive>
-            <directive name="tab" tabid="macos"><text>macOS</text>
+            <directive name="tab" tabid="macos">
+                <text>macOS</text>
                 <paragraph><text>macOS Content</text></paragraph>
             </directive>
-            <directive name="tab" tabid="linux"><text>Linux</text>
+            <directive name="tab" tabid="linux">
+                <text>Linux</text>
                 <paragraph><text>Linux Content</text></paragraph>
             </directive>
         </directive>
@@ -66,17 +79,23 @@ def test_tabs() -> None:
         <directive name="tabs" tabset="platforms">
         </directive>
 
-        <directive name="tabs" tabset="platfors">
+        <directive name="tabs" tabset="unknown-tabset">
             <directive name="tab" tabid="linux">
-            <paragraph><text>Linux Content</text></paragraph>
+                <paragraph><text>Linux Content</text></paragraph>
             </directive>
         </directive>
 
-        <directive name="tabs" hidden="True"><directive name="tab" tabid="trusty">
-        <text>Ubuntu 14.04 (Trusty)</text><paragraph><text>
-        Trusty content</text></paragraph></directive>
-        <directive name="tab" tabid="xenial"><text>Ubuntu 16.04 (Xenial)</text><paragraph><text>
-        Xenial content</text></paragraph></directive></directive>
+        <directive name="tabs" hidden="True">
+            <directive name="tab" tabid="trusty">
+                <text>Ubuntu 14.04 (Trusty)</text>
+                <paragraph><text>Trusty content</text></paragraph>
+            </directive>
+            <directive name="tab" tabid="xenial">
+                <text>Ubuntu 16.04 (Xenial)</text>
+                <paragraph><text>Xenial content</text></paragraph>
+            </directive>
+        </directive>
+
         </root>""",
     )
 
@@ -2231,8 +2250,8 @@ def test_dates() -> None:
 
 def test_problematic() -> None:
     """Test that "<problematic>" nodes by the docutils parser --- typically when a
-       role isn't known --- are excluded from the output AST. We might change this
-       behavior, but for now we should define it."""
+    role isn't known --- are excluded from the output AST. We might change this
+    behavior, but for now we should define it."""
     path = ROOT_PATH.joinpath(Path("test.rst"))
     project_config = ProjectConfig(ROOT_PATH, "", source="./")
     parser = rstparser.Parser(project_config, JSONVisitor)
@@ -2268,7 +2287,8 @@ def test_deprecated() -> None:
     page.finish(diagnostics)
     assert len(diagnostics) == 1
     check_ast_testing_string(
-        page.ast, """<root fileid="test.rst"></root>""",
+        page.ast,
+        """<root fileid="test.rst"></root>""",
     )
 
 
@@ -2431,7 +2451,11 @@ def test_malformed_monospace() -> None:
     project_config = ProjectConfig(ROOT_PATH, "", source="./")
     parser = rstparser.Parser(project_config, InlineJSONVisitor)
 
-    page, diagnostics = parse_rst(parser, path, """`malformed syntax`""",)
+    page, diagnostics = parse_rst(
+        parser,
+        path,
+        """`malformed syntax`""",
+    )
     page.finish(diagnostics)
     assert [
         (type(d), d.did_you_mean() if isinstance(d, MakeCorrectionMixin) else "")
@@ -2525,7 +2549,12 @@ This is a paragraph.
     assert [
         (type(d), d.did_you_mean() if isinstance(d, MakeCorrectionMixin) else "")
         for d in diagnostics
-    ] == [(UnexpectedIndentation, [".. blockquote::"],)]
+    ] == [
+        (
+            UnexpectedIndentation,
+            [".. blockquote::"],
+        )
+    ]
 
 
 def test_label_matches_heading() -> None:
