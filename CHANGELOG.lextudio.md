@@ -1,3 +1,13 @@
+## [v1.8.10] - 2021-02-26
+
+### Fixed
+
+- Added an autocompletion crash. ([GitHub-20](https://github.com/vscode-restructuredtext/snooty-parser/issues/20))
+
+### Changed
+
+- Sync up with upstream.
+
 ## [v1.8.9] - 2021-02-20
 
 ### Fixed
