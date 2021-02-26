@@ -1216,6 +1216,9 @@ class _Project:
         self.pages.flush()
         page = self.pages[fileid]
         lines = page.source.splitlines()
+        length = len(lines)
+        if line >= length:
+            return ''
         return lines[line]
 
     def get_page_ast(self, path: Path) -> n.Node:
