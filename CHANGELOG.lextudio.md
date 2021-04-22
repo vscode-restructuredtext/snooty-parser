@@ -1,3 +1,9 @@
+## [v1.9.0] - 2021-04-22
+
+### Changed
+
+- Sync up with upstream.
+
 ## [v1.8.10] - 2021-02-26
 
 ### Fixed
