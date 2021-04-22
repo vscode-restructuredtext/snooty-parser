@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v0.9.6] - 2021-04-07
+
+### Changed
+
+- Temporarily un-deprecate directive.class (DOP-2088).
+- Remove button class option (#298).
+- Identify headings for 'On this page' box (DOP-2045, #297).
+
+## [v0.9.5] - 2021-03-10
+
+### Fixed
+
+- step-fix: Add an argument to landing steps (#295)
+- DOP-1883: update URL of kotlin SDK to avoid redirect chain (#296)
+
+## [v0.9.4] - 2021-03-03
+
+### Fixed
+
+- Links to Realm SDKs should not require a trailing slash (DOP-2022).
+
 ## [v0.9.3] - 2021-02-24
 
 ### Added

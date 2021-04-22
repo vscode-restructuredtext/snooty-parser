@@ -275,7 +275,7 @@ argument_type = "string"
 
 [directive.class]
 help = """Set a class on the next element."""
-deprecated = true
+# deprecated = true
 argument_type = "string"
 content_type = "block"
 
@@ -784,14 +784,12 @@ inherit = "_landing-base"
 content_type = "block"
 
 [directive."landing:button"]
-help = 'Make a button.'
-example = '''.. button:: ${1: string}
-:uri: ${2:/path or url}
-:class: ${3: left-column (Optional)}'''
-argument_type = 'string'
-content_type = '_landing-block'
-options.uri = { type = ['path', 'uri'], required = true }
-options.class = { required = true, type = 'string' }
+help = "Make a button."
+example = """.. button:: ${1: string}
+:uri: ${2:/path or url}"""
+argument_type = "string"
+content_type = "_landing-block"
+options.uri = { type = ["path", "uri"], required = true }
 
 [directive."landing:card-group"]
 inherit = "_landing-block"
@@ -837,22 +835,22 @@ inherit = "_landing-block"
 inherit = "_landing-block"
 
 [directive."landing:kicker"]
-help = 'Make a kicker (a subheader that is placed on top of the main header).'
-example = '''.. kicker:: ${1: string}'''
-argument_type = 'string'
-content_type = '_landing-block'
+help = "Make a kicker (a subheader that is placed on top of the main header)."
+example = """.. kicker:: ${1: string}"""
+argument_type = "string"
 
 [directive."landing:procedure"]
 help = "Make a set of numbered steps."
-example = '''.. procedure::
-${0: Steps content}'''
-content_type = '_landing-block'
+example = """.. procedure::
+${0: Steps content}"""
+content_type = "_landing-block"
 
 [directive."landing:step"]
-help = 'Make a single, numbered step.'
-example = '''.. step::
-${0: Single step’s content}'''
-content_type = '_landing-block'
+help = "Make a single, numbered step."
+example = """.. step:: ${0: Step's headline string}
+${1: Step content}"""
+argument_type = "string"
+content_type = "_landing-block"
 
 
 ###### Misc.
@@ -1403,7 +1401,7 @@ help = """Link to a page in the Compass docs."""
 type = {link = "https://docs.mongodb.com/compass/current%s", ensure_trailing_slash = true}
 
 [role."dotnet-sdk"]
-type = {link = "https://docs.mongodb.com/realm-sdks/dotnet/10.0.0-beta.1/%s", ensure_trailing_slash = true}
+type = {link = "https://docs.mongodb.com/realm-sdks/dotnet/10.0.0-beta.1/%s"}
 
 [role.ecosystem]
 help = """Link to a page in the Ecosystem docs."""
@@ -1442,7 +1440,7 @@ type = {link = "http://source.wiredtiger.com/mongodb-3.4%s"}
 type = {link = "https://github.com/mongodb/specifications/blob/master/source%s"}
 
 [role."js-sdk"]
-type = {link = "https://docs.mongodb.com/realm-sdks/js/latest/%s", ensure_trailing_slash = true}
+type = {link = "https://docs.mongodb.com/realm-sdks/js/latest/%s"}
 
 [role."facebook"]
 type = {link = "https://developers.facebook.com/%s"}
@@ -1499,16 +1497,16 @@ type = {link = "https://developer.apple.com/%s"}
 type = {link = "https://docs.mongodb.com/realm/admin/api/v3/#%s", ensure_trailing_slash = true}
 
 [role."java-sdk"]
-type = {link = "https://docs.mongodb.com/realm-sdks/java/latest/%s", ensure_trailing_slash = true}
+type = {link = "https://docs.mongodb.com/realm-sdks/java/latest/%s"}
 
 [role."kotlin-sdk"]
-type = {link = "https://docs.mongodb.com/realm-sdks/kotlin/latest/%s", ensure_trailing_slash = true}
+type = {link = "https://docs.mongodb.com/realm-sdks/kotlin/latest/kotlin-extensions/%s"}
 
 [role."swift-sdk"]
-type = {link = "https://docs.mongodb.com/realm-sdks/swift/latest/%s", ensure_trailing_slash = true}
+type = {link = "https://docs.mongodb.com/realm-sdks/swift/latest/%s"}
 
 [role."objc-sdk"]
-type = {link = "https://docs.mongodb.com/realm-sdks/objc/latest/%s", ensure_trailing_slash = true}
+type = {link = "https://docs.mongodb.com/realm-sdks/objc/latest/%s"}
 
 [role."codesandbox"]
 type = {link = "https://codesandbox.io/%s"}
