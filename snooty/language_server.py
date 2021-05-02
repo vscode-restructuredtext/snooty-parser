@@ -4,8 +4,7 @@ import os
 from snooty.lsp import CompletionItemKind
 import sys
 import threading
-from urllib.parse import urlparse, unquote
-from urllib.request import url2pathname
+from urllib.parse import urlparse
 from collections import defaultdict
 from dataclasses import dataclass
 from functools import wraps
@@ -346,8 +345,7 @@ class LanguageServer(pyls_jsonrpc.dispatchers.MethodDispatcher):
         parsed = urlparse(uri)
         if parsed.scheme != "file":
             raise ValueError("Only file:// URIs may be resolved", uri)
-
-        path = self.uriToPath(uri)
+        path = util.uri_to_path(uri)
         return self.project.config.get_fileid(path)
 
     def fileid_to_uri(self, fileid: FileId) -> str:
@@ -365,7 +363,7 @@ class LanguageServer(pyls_jsonrpc.dispatchers.MethodDispatcher):
         **kwargs: object,
     ) -> SerializableType:
         if rootUri:
-            root_path = self.uriToPath(rootUri)
+            root_path = util.uri_to_path(rootUri)
             self.project = Project(root_path, self.backend, {})
             self.notify_diagnostics()
 
@@ -414,7 +412,7 @@ class LanguageServer(pyls_jsonrpc.dispatchers.MethodDispatcher):
             logger.warn("Project uninitialized")
             return None
 
-        filePath = self.uriToPath(doc_uri)
+        filePath = util.uri_to_path(doc_uri)
         line_content = self.project.get_line_content(filePath, position["line"])
         column: int = position["character"]
         if column > 1 and line_content[column - 2 : column] == "`/":
@@ -431,14 +429,6 @@ class LanguageServer(pyls_jsonrpc.dispatchers.MethodDispatcher):
                 )
             return CompletionList(False, completions)
         return None
-
-    @staticmethod
-    def uriToPath(uri: Uri) -> Path:
-        parsed = urlparse(uri)
-        host = "{0}{0}{mnt}{0}".format(os.path.sep, mnt=parsed.netloc)
-        return Path(
-            os.path.abspath(os.path.join(host, url2pathname(unquote(parsed.path))))
-        )
 
     def m_initialized(self, **kwargs: object) -> None:
         # Ignore this message to avoid logging a pointless warning
@@ -465,7 +455,10 @@ class LanguageServer(pyls_jsonrpc.dispatchers.MethodDispatcher):
             )
             return str(resolved_target_path)
         elif resolveType == "directive":
-            return str(self.project.config.source_path) + fileName
+            resolved_target_path = util.add_directive_target(
+                fileName, PurePath(docPath), self.project.config.source_path
+            )
+            return str(resolved_target_path)
         else:
             logger.error("resolveType is not supported")
             return fileName

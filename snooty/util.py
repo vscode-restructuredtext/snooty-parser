@@ -7,7 +7,7 @@ import time
 from collections import defaultdict
 from contextlib import contextmanager
 from dataclasses import dataclass
-from pathlib import Path, PurePath, PurePosixPath
+from pathlib import Path, PurePath, PurePosixPath, PureWindowsPath
 from typing import (
     Callable,
     Container,
@@ -22,6 +22,8 @@ from typing import (
     TypeVar,
     cast,
 )
+from urllib.parse import unquote, urlparse
+from urllib.request import url2pathname
 
 import docutils.nodes
 import docutils.parsers.rst.directives
@@ -124,6 +126,19 @@ def add_doc_target_ext(target: str, docpath: PurePath, project_root: Path) -> Pa
     # If none of the files exists, return the original file path to trigger errors.
     return resolved_target_path
 
+def add_directive_target(target: str, docpath: PurePath, project_root: Path) -> Path:
+    """Given the target file of a directive and return full file path"""
+
+    target_path = PurePosixPath(target)
+    fileid, resolved_target_path = reroot_path(target_path, docpath, project_root)
+    return resolved_target_path
+
+def uri_to_path(uri: str) -> Path:
+    parsed = urlparse(uri)
+    host = "{0}{0}{mnt}{0}".format(os.path.sep, mnt=parsed.netloc)
+    return Path(
+        os.path.abspath(os.path.join(host, url2pathname(unquote(parsed.path))))
+    )
 
 class FileWatcher:
     """A monitor for file changes."""
