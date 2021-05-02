@@ -1,3 +1,9 @@
+## [v1.9.1] - 2021-05-02
+
+### Fixed
+
+- Revised hover file path resolution. ([GitHub-23](https://github.com/vscode-restructuredtext/snooty-parser/issues/23))
+
 ## [v1.9.0] - 2021-04-22
 
 ### Changed
