@@ -5,7 +5,7 @@ version = 0
 alignment = ["left", "center", "right"]
 backlinks = ["entry", "top", "none"]
 card_type = ["small", "large"]
-card_style = ["default", "compact"]
+card_style = ["default", "compact", "extra-compact"]
 charts_theme = ["light", "dark"]
 devhub_type = ["article", "quickstart", "how-to", "video", "live"]
 guide_categories = ["Getting Started"]
@@ -798,7 +798,7 @@ options.columns = "nonnegative_integer"
 options.style = "card_style"
 example = """.. card-group::
    ${1::columns: 2}
-   :style: ${2:|default,compact| (Optional)}
+   :style: ${2:|default,compact,extra-compact| (Optional)}
 
    ${0: Card content}
 """
@@ -961,6 +961,22 @@ example = """.. topic:: ${1:Title of block}
 
 [directive.search-results]
 help = """Shows search results from browser query params (no arguments)."""
+
+[directive.ia]
+help = """Creates a hierarchy of entry directives that function as children of this page."""
+content_type = "block"
+
+[directive.entry]
+help = """Specifies a Snooty project, internal page, or external url that represents a child of this page."""
+argument_type = "string"
+options.url = "string"
+options.project-name = "string"
+options.primary = "flag"
+example = """.. entry:: ${0: string}
+   ${1::url: (string)
+   :project-name: (string) [optional]
+   :primary: (optional)}
+"""
 
 ###### Roles
 [role.emphasis]
@@ -1338,6 +1354,9 @@ type = {link = "https://docs.mongodb.com/v4.0%s", ensure_trailing_slash = true}
 [role."v4.2"]
 type = {link = "https://docs.mongodb.com/v4.2%s", ensure_trailing_slash = true}
 
+[role."v4.4"]
+type = {link = "https://docs.mongodb.com/v4.4%s", ensure_trailing_slash = true}
+
 [role.website]
 help = """Link to a page in the MongoDB website."""
 type = {link = "https://www.mongodb.com%s?tck=docs"}
@@ -1401,7 +1420,7 @@ help = """Link to a page in the Compass docs."""
 type = {link = "https://docs.mongodb.com/compass/current%s", ensure_trailing_slash = true}
 
 [role."dotnet-sdk"]
-type = {link = "https://docs.mongodb.com/realm-sdks/dotnet/10.0.0-beta.1/%s"}
+type = {link = "https://docs.mongodb.com/realm-sdks/dotnet/latest/%s"}
 
 [role.ecosystem]
 help = """Link to a page in the Ecosystem docs."""
@@ -1672,11 +1691,11 @@ prefix = "asetting"
 [rstobject."mongodb:apierror"]
 help = """Error Code for Public API"""
 
-[rstobject.phpclass]
+[rstobject."mongodb:phpclass"]
 help = """PHP Library class"""
 prefix = "phpclass"
 
-[rstobject.phpmethod]
+[rstobject."mongodb:phpmethod"]
 help = """PHP Library method"""
 prefix = "phpmethod"
 
