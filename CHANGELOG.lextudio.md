@@ -1,3 +1,13 @@
+## [v1.9.2] - 2021-05-15
+
+### Changed
+
+- Sync up with upstream.
+
+### Fixed
+
+- Added csv-table directive. ([GitHub-22](https://github.com/vscode-restructuredtext/snooty-parser/issues/22))
+
 ## [v1.9.1] - 2021-05-02
 
 ### Fixed
@@ -14,7 +24,7 @@
 
 ### Fixed
 
-- Added an autocompletion crash. ([GitHub-20](https://github.com/vscode-restructuredtext/snooty-parser/issues/20))
+- Resolved an autocompletion crash. ([GitHub-20](https://github.com/vscode-restructuredtext/snooty-parser/issues/20))
 
 ### Changed
 
