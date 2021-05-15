@@ -26,6 +26,24 @@ deprecated = true
 argument_type = "string"
 content_type = "block"
 
+[directive.csv-table]
+help = """Define a table using CSV."""
+content_type = "csv_table"
+argument_type = "string"
+options.width = "string"
+options.widths = "string"
+options.header-rows = "nonnegative_integer"
+options.stub-columns = "nonnegative_integer"
+options.header = "string"
+options.file = "string"
+options.url = "string"
+options.encoding = "string"
+options.delim = "string"
+options.quote = "string"
+options.keepspace = "flag"
+options.escape = "string"
+options.align = "alignment"
+
 [directive.list-table]
 help = """Define a table using nested lists."""
 content_type = "list_table"
